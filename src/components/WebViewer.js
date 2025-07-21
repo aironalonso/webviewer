@@ -1,14 +1,23 @@
 // src/components/WebViewer/index.js
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BookmarkList from './BookmarkList';
+import './WebViewer.css';
 
-const WebViewer = () => {
+const WebViewer = ({ addBookmark }) => {
     const [url, setUrl] = useState('https://example.com');
     const [currentUrl, setCurrentUrl] = useState(url);
     const [history, setHistory] = useState([url]);
-    const [bookmarks, setBookmarks] = useState([]);
+    const [historyIndex, setHistoryIndex] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+    const controlsRef = useRef(null);
+    const [iframeMarginTop, setIframeMarginTop] = useState(0);
+
+    useEffect(() => {
+        if (controlsRef.current) {
+            setIframeMarginTop(controlsRef.current.offsetHeight);
+        }
+    }, [controlsRef.current]);
 
     const handleChange = (e) => {
         setUrl(e.target.value);
@@ -19,7 +28,10 @@ const WebViewer = () => {
         if (sanitizedUrl) {
             setLoading(true);
             setCurrentUrl(sanitizedUrl);
-            setHistory((prev) => [...prev, sanitizedUrl]);
+            const newHistory = history.slice(0, historyIndex + 1);
+            newHistory.push(sanitizedUrl);
+            setHistory(newHistory);
+            setHistoryIndex(newHistory.length - 1);
             setUrl('');
             setError(false);
         } else {
@@ -28,9 +40,12 @@ const WebViewer = () => {
     };
 
     const sanitizeUrl = (url) => {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+        }
         try {
             const newUrl = new URL(url);
-            return newUrl.protocol === 'http:' || newUrl.protocol === 'https:' ? newUrl.href : null;
+            return newUrl.href;
         } catch {
             return null;
         }
@@ -47,44 +62,47 @@ const WebViewer = () => {
     };
 
     const goBack = () => {
-        if (history.length > 1) {
-            const newHistory = [...history.slice(0, -1)];
-            setHistory(newHistory);
-            setCurrentUrl(newHistory[newHistory.length - 1]);
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setCurrentUrl(history[newIndex]);
         }
     };
 
-    const addBookmark = () => {
-        setBookmarks((prev) => [...prev, currentUrl]);
+    const goForward = () => {
+        if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setCurrentUrl(history[newIndex]);
+        }
     };
 
     return (
-        <div>
-            <h1>Web Viewer</h1>
-            <input
-                type="text"
-                value={url}
-                onChange={handleChange}
-                placeholder="Enter URL"
-            />
-            <button onClick={handleNavigate}>Go</button>
-            <button onClick={goBack} disabled={history.length <= 1}>Back</button>
-            <button onClick={addBookmark}>Bookmark</button>
+        <div className="web-viewer-container">
+            <div className="controls" ref={controlsRef}>
+                <button onClick={goBack} disabled={historyIndex <= 0}>Back</button>
+                <button onClick={goForward} disabled={historyIndex >= history.length - 1}>Forward</button>
+                <input
+                    type="text"
+                    value={url}
+                    onChange={handleChange}
+                    onKeyPress={(e) => e.key === 'Enter' && handleNavigate()}
+                    placeholder="Enter URL"
+                />
+                <button onClick={handleNavigate}>Go</button>
+                <button onClick={() => addBookmark(currentUrl)}>Bookmark</button>
+            </div>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>Error loading the site. Please check the URL and try again.</p>}
-
-            <iframe
-                src={currentUrl}
-                title="Web Viewer"
-                width="100%"
-                height="600px"
-                onLoad={handleLoad}
-                onError={handleError}
-                style={{ border: '1px solid #ccc' }}
-            />
-
-            <BookmarkList bookmarks={bookmarks} />
+            <div className="iframe-container" style={{ marginTop: iframeMarginTop }}>
+                {loading && <div className="loading">Loading...</div>}
+                {error && <div className="error">This site could not be loaded. Many sites use security policies like <code>Content-Security-Policy</code> or <code>X-Frame-Options</code> to prevent them from being displayed in an iframe.</div>}
+                <iframe
+                    src={currentUrl}
+                    title="Web Viewer"
+                    onLoad={handleLoad}
+                    onError={handleError}
+                />
+            </div>
         </div>
     );
 };

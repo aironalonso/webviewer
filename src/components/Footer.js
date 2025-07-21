@@ -1,9 +1,11 @@
 import React from 'react';
+import BookmarkList from './BookmarkList';
 
-const Footer = () => {
+const Footer = ({ bookmarks, removeBookmark }) => {
     return (
         <footer>
-            <p>&copy; 2024 Web Viewer</p>
+            <BookmarkList bookmarks={bookmarks} removeBookmark={removeBookmark} />
+            <p>&copy; 2025 Web Viewer</p>
         </footer>
     )
 };

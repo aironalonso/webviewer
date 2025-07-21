@@ -3,7 +3,7 @@ import BookmarkList from './BookmarkList';
 
 const Footer = ({ bookmarks, removeBookmark }) => {
     return (
-        <footer>
+        <footer style={{ textAlign: 'center' }}>
             <BookmarkList bookmarks={bookmarks} removeBookmark={removeBookmark} />
             <p>&copy; 2025 Web Viewer</p>
         </footer>

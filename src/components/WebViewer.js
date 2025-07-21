@@ -1,5 +1,6 @@
 // src/components/WebViewer/index.js
 import React, { useState, useEffect, useRef } from 'react';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import BookmarkList from './BookmarkList';
 import './WebViewer.css';
 
@@ -80,13 +81,13 @@ const WebViewer = ({ addBookmark }) => {
     return (
         <div className="web-viewer-container">
             <div className="controls" ref={controlsRef}>
-                <button onClick={goBack} disabled={historyIndex <= 0}>Back</button>
-                <button onClick={goForward} disabled={historyIndex >= history.length - 1}>Forward</button>
+                <button onClick={goBack} disabled={historyIndex <= 0}><FaArrowLeft /></button>
+                <button onClick={goForward} disabled={historyIndex >= history.length - 1}><FaArrowRight /></button>
                 <input
                     type="text"
                     value={url}
                     onChange={handleChange}
-                    onKeyPress={(e) => e.key === 'Enter' && handleNavigate()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleNavigate()}
                     placeholder="Enter URL"
                 />
                 <button onClick={handleNavigate}>Go</button>
